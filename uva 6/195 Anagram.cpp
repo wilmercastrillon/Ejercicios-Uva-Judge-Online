@@ -2,15 +2,24 @@
 
 using namespace std;
 char cad[1000];
+map<char, int> mapa;
+
+void llenar(){
+	char c1 = 'A', c2 = 'a';
+	int con = 0;
+	for(int i = 0; i < 26; i++){
+		mapa[c1++] = con++;
+		mapa[c2++] = con++;
+	}
+}
 
 bool cmp(char a, char b){
-	if(a < 'a') a += 32;
-	if(b < 'a') b += 32;
-	return a < b;
+	return mapa[a] < mapa[b];
 }
 
 int main(){
 	int n, l;
+	llenar();
 	scanf("%d", &n);
 	
 	while(n--){
@@ -18,9 +27,9 @@ int main(){
 		l = strlen(cad);
 		sort(cad,cad+l, cmp);
 		
-		while(next_permutation(cad, cad+l, cmp)){
+		do{
 			printf("%s\n", cad);
-		}
+		}while(next_permutation(cad, cad+l, cmp));
 	}
 	
 	return 0;
