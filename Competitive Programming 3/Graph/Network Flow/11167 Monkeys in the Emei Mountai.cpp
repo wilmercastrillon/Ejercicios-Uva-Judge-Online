@@ -4,6 +4,7 @@
 #include <string.h>
 #include <iostream>
 #include <set>
+#include <algorithm>
 #define inf 1000000000
 #define forr(a, n) for(int a = 0; a < n; a++)
 #define forab(i, a, b) for(int i = a; i <= b; i++)
@@ -21,8 +22,8 @@ struct monos{
     }
 };
 
-int start, target, MAX=45;//MAX=numero de nodos
-int mf, f, matriz[250][250];//aplicaciones, computadores
+int start, target, MAX=500;//MAX=numero de nodos
+int mf, f, matriz[500][500], inicio[500][5];//aplicaciones, computadores
 vi p;
 vvi grafo;
 set<int> intervalos;
@@ -64,9 +65,8 @@ int EdmondsKarp(){
     return mf;
 }
 
-int main(){//   ###Sin terminar
-//freopen("salida.txt", "w", stdout);
-    start = 0, target = 15;
+int main(){
+    start = 0, target = 499;
     int n, m, a, b, z, total, caso = 1;
 
     while(scanf("%d", &n), n){
@@ -77,7 +77,7 @@ int main(){//   ###Sin terminar
         total = 0;
         memset(matriz, 0, sizeof(matriz));
 
-        for(int i = 0; i < n; i++){
+        for(int i = 1; i <= n; i++){
             scanf("%d %d %d", &z, &a, &b);
             intervalos.insert(a);
             intervalos.insert(b);
@@ -89,8 +89,11 @@ int main(){//   ###Sin terminar
         it++;
         for(; it != intervalos.end(); it++){
             current = *it;
+            inicio[rango.size()][0] = last;  inicio[rango.size()][1] = last;
+            inicio[rango.size()][2] = last;  inicio[rango.size()][3] = last;
+            inicio[rango.size()][4] = last;
             rango.push_back(ii(last, current));
-            //printf("intervalo-nodo %d es (%d, %d)\n", rango.size() + n, last, current);
+            //printf("rango(%d, %d) -> inicia con %d\n", last, current, inicio[rango.size()][0]);
             last = current;
         }
 
@@ -105,10 +108,10 @@ int main(){//   ###Sin terminar
 
             for(int j = 0; rango[j].second <= k.b && j < rango.size(); j++){
                 if(rango[j].first >= k.a){
+                    //printf("conexion de %d a %d con peso %d\n", i+1, 1+n+j, rango[j].second - rango[j].first);
                     grafo[i+1].push_back(1 + n + j);
                     grafo[1 + n + j].push_back(i+1);
                     matriz[i+1][1 + n + j] = rango[j].second - rango[j].first;
-                    //printf("conexion de %d a %d con peso %d\n", i+1, 1+n+j, rango[j].second - rango[j].first);
                 }
             }
         }
@@ -126,20 +129,54 @@ int main(){//   ###Sin terminar
             continue;
         }
         vector<vii> sol(n+1);
-        forab(i, n+1, 11){
-            forr(j, 11){
+        int lim = rango.size() + n + 1, cant, idx;
+
+        forab(i, n+1, lim){
+            forr(j, lim){
                 if(matriz[i][j]){
-                    //printf("rango %d es usado por el nodo %d, peso: %d ", i, j, matriz[i][j]);
-                    //printf("val: (%d, %d)", rango[i].first, rango[j].second);
-                    sol[j].push_back(rango[i-(n+1)]);
+                    idx = i-(n+1);
+                    //printf("rango (%d, %d) es usado por el nodo %d, peso: %d | inicia en %d\n", rango[idx].first, rango[idx].second,
+                    //            j, matriz[i][j], inicio[idx][3]);
+                    forr(k, m){
+                        if(matriz[i][j] == 0) break;
+                        cant = min(rango[idx].second-inicio[idx][k], matriz[i][j]);
+                        //printf("\t min(%d - %d, %d) intentar usar (%d, %d) , cant %d\n", rango[idx].second, inicio[idx][k], matriz[i][j],
+                        //       inicio[idx][k], inicio[idx][k] + cant, cant);
+                        if(cant == 0) continue;
+
+                        ii add(inicio[idx][k], inicio[idx][k] + cant);
+                        ii actual = rango[idx];
+                        inicio[idx][k] += cant;
+                        matriz[i][j] -= cant;
+                        //printf("\tagregamos (%d %d) con peso %d\n", inicio[j][k], inicio[j][k] + cant, cant);
+                        sol[j].push_back(add);
+                    }
                 }
             }
         }
 
         printf("Case %d: Yes", caso++);
-        forab(i, 1, n){
-            printf("\n%d (%d,%d)", sol[i].size(), sol[i][0].first, sol[i][0].second);
-            for(int j = 1; j < sol[i].size(); j++) printf(" (%d,%d)", sol[i][j].first, sol[i][j].second);
+        forr(i, sol.size()){
+            if(!sol[i].size()) continue;
+            sort(sol[i].begin(), sol[i].end());
+            //printf("ordena con tam %d\n", sol[i].size());
+            vector<ii> imp;
+            ii ant, act;
+            //printf("insertamos (%d, %d)\n", sol[i][0].first, sol[i][0].second);
+            imp.push_back(ii(sol[i][0].first, sol[i][0].second));
+
+            for(int j = 1; j < sol[i].size(); j++){
+                ant = imp.back();
+                act = sol[i][j];
+                //printf("insertamos (%d, %d)\n", act.first, act.second);
+                if(ant.second == act.first){
+                    imp.pop_back();
+                    imp.push_back(ii(ant.first, act.second));
+                }else imp.push_back(act);
+            }
+
+            printf("\n%d (%d,%d)", imp.size(), imp[0].first, imp[0].second);
+            for(int j = 1; j < imp.size(); j++) printf(" (%d,%d)", imp[j].first, imp[j].second);
         }
         printf("\n");
     }
