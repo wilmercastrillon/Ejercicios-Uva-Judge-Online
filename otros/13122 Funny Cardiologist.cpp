@@ -2,6 +2,8 @@
 #include <queue>
 #include <vector>
 #include <algorithm>
+#include <math.h>
+#include <stdio.h>
 #define inf 1000000000
 #define forab(i, a, b) for(int i = a; i < b; i++)
 #define forr(i, n) for(int i = 0; i < n; i++)
@@ -21,6 +23,7 @@ int main(){
     int n, k, x, y;
 
     while(scanf("%d %d", &n, &k) != EOF){
+        puntos.clear();
         forr(i, n){
             scanf("%d %d", &x, &y);
             puntos.push_back(ii(x, y));
@@ -32,11 +35,12 @@ int main(){
         }
 
         forab(i, 1, k+1){
-            memo[i][0] = 0.0;
-            memo[i][1] = dist(puntos[0], puntos[1]);
-            forab(j, 2, n){
-                memo[i][j] = min(memo[i-1][j-2]+dist(puntos[j-2],puntos[j]),
-                                 memo[i][j-1]+dist(puntos[j-1],puntos[j]));
+            memo[i][i-1] = memo[i-1][i-1];
+            forab(j, i, n){
+                memo[i][j] = 1e8;
+                for(int l = 0; l<=i && (l+1)<=j; l++){
+                    memo[i][j] = min(memo[i][j],memo[i-l][j-(l+1)]+dist(puntos[j-(l+1)],puntos[j]));
+                }
             }
         }
 
