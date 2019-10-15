@@ -9,7 +9,7 @@ lli mcd(lli a, lli b){//algoritmo de euclides
     return  a? mcd(b %a, a): b;
 }
 
-lli mulmod (lli a, lli b, lli c) {
+lli mulmod(lli a, lli b, lli c) {
 	lli x = 0, y = a%c;
 	while (b > 0){
 		if (b % 2 == 1) x = (x+y) % c;
