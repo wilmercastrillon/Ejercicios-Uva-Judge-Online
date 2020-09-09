@@ -77,18 +77,29 @@ int main(){
         buid_sa(s);
         LCP();
 
-        int mejor = 0, can = 0;
-        for(int i = n-1; i>0; i--){
+        int mejor = 0, can = 1, lastidx = -1;
+        for(int i = 0; i < n; i++){
             if(lcp[i] > mejor){
                 mejor = lcp[i];
                 can = 1;
-
+                lastidx = i;
             }
-        }
-        forr(i,n){
-            printf("%d lcp %d | cad %s\n", sa[i], lcp[i],t.substr(sa[i]).c_str());
+            if(lcp[i]==mejor){
+                //printf("empate? %d+1 == %d entonces suma\n", i,lastidx);
+                if(i==lastidx+1){
+                    can++;
+                }else{
+                    can = 1;
+                }
+                lastidx = i;
+            }
+            printf("%2d lcp %2d | cad %s | mejor %2d | cant %d\n", sa[i], lcp[i],t.substr(sa[i]).c_str(), mejor, can);
         }
 
+        if(lastidx != -1)
+            printf("%s %d\n", t.substr(sa[lastidx],mejor).c_str(), can);
+        else
+            printf("No repetitions found!\n");
     }
 
     return 0;

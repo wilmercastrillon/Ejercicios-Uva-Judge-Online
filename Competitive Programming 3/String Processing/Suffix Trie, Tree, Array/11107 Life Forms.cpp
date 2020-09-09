@@ -1,11 +1,12 @@
 #include <bits/stdc++.h>
 #define forr(i,n) for(int i = 0; i < n; ++i)
 #define forab(i,a,b) for(int i = a; i < b; ++i)
+#define pb(x) push_back(x)
 
 using namespace std;
 typedef pair<int,int> ii;
 
-#define maxn 2010
+#define maxn 101000
 char cad[maxn], subcad[maxn];
 int len_cad, len_subcad;//len t, len p
 int ra[maxn], temp_ra[maxn];
@@ -57,7 +58,7 @@ void LCP(){//longest common prefix
             plcp[i] = 0;
             continue;
         }
-        while(cad[i+l]==cad[phi[i]+l]) l++;
+        while(cad[i+l]==cad[phi[i]+l] && cad[i+l]!='$') l++;
         plcp[i] = l;
         l = max(l-1,0);
     }
@@ -65,57 +66,32 @@ void LCP(){//longest common prefix
         lcp[i] = plcp[sa[i]];
 }
 
-ii stringMatching(){
-    int lo, hi = len_cad-1, mid =lo;
-    while(lo < hi){
-        mid = (lo + hi)/2;
-        int res = strncmp(cad+sa[mid],subcad,len_subcad);
-        if(res >= 0) hi = mid;
-        else lo = mid + 1;
-    }
-
-    if(strncmp(cad+sa[lo],subcad,len_subcad) != 0)
-        return ii(-1,-1);
-    ii ans;  ans.first = lo;
-    lo = 0;  hi = len_cad-1;  mid = lo;
-
-    while(lo < hi){
-        mid = (lo + hi) / 2;
-        int res = strncmp(cad+sa[mid],subcad,len_subcad);
-        if(res > 0) hi = mid;
-        else lo = mid + 1;
-    }
-
-    if(strncmp(cad+sa[hi],subcad,len_subcad)) hi--;
-    ans.second = hi;
-    return ans;
-}
-
-int mejor, owner[110];
+int owner[maxn], auxowner[maxn];
 char arr[110][1010];
 
-void calcOwner(vector<int> &puntos){
-    forr(i,len_cad){
-        if(cad[sa[i]] == '#'){
-            owner[i] = -1;
-            continue;
+void calcOwner(){
+    auxowner[0] = 0;
+    int x = 0;
+    //printf("el cad[%d] = %c en cadena %d\n", 0, cad[0], owner[0]);
+    forab(i,1,len_cad){
+        if(cad[i] != '$')
+            auxowner[i] = x;
+        else{
+            x++;
+            auxowner[i] = -1;
         }
-        owner[i] = lower_bound(puntos.begin(),puntos.end(),sa[i]) - puntos.begin();
+        //printf("el cad[%d] = %c en cadena %d\n", i, cad[i], owner[i]);
     }
+
+    forr(i,len_cad)
+        owner[i] = auxowner[sa[i]];
 }
 
-ii LCS(){//longitud e indice
-    int idx = -1, mejorLCP = -1;
-    forab(i,1,len_cad){
-        if(owner[sa[i]] != owner[sa[i-1]] && lcp[i]>mejorLCP){
-            mejorLCP = lcp[i];
-            idx = i;
-        }
-    }
-    return ii(mejorLCP,idx);
-}
+int vis[250];
+char cadaux[1010];
 
 int main(){
+    cin.tie(NULL);
     //freopen("entrada.txt","r",stdin);
     //freopen("salida.txt", "w", stdout);
     int m, x;
@@ -123,84 +99,78 @@ int main(){
 
     while(m){
         scanf("%s", &cad);
-        vector<int> puntos;
-        forab(i,1,m){
-            scanf("%s", &arr[i]);
-            puntos.push_back(strlen(cad));
-            strcat(cad,"#");
-            strcat(cad,arr[i]);
-        }
-        puntos.push_back(strlen(cad));
-
-        buid_sa();
-        LCP();
-        calcOwner(puntos);
-
-        forr(i,len_cad){
-            printf("ow %2d | sa %2d | %s\n", owner[i], sa[i],cad+sa[i]);
-        }
-
-        int con[maxn];
-        int len_lcs = 0;
-        memset(con,0,sizeof(con));
-
-        for(int i=m,j=m,total=0; j<len_cad; ){
-            printf("i %d, j %d, total %d\n",i,j,total);
-            if(total <= m/2){
-                if(!con[owner[j++]]++){
-                    ++total;
-                }
-                printf("con= [");
-                forr(k,len_cad){
-                    printf("%2d,",con[k]);
-                }
-                printf("]\n");
-                printf("ow = [");
-                forr(k,len_cad){
-                    printf("%2d,",owner[k]);
-                }
-                printf("]\n");
-            }
-
-            if(total > m/2){
-                len_lcs = max(len_lcs,lcp[min_element(lcp+i+1,lcp+j) - lcp]);
-
-                if(!--con[owner[i++]]){
-                    --total;
-                }
-            }
-        }
-
-        if(!len_lcs){
-            printf("?\n");
+        if(m == 1){
+            printf("%s\n", cad);
+            scanf("%d", &m);
+            if(m==0) break;
+            printf("\n");
             continue;
         }
 
-        int psa = -1;
-        memset(con,0,sizeof(con));
-
-        for(int i=m,j=m,total=0; j<len_cad; ){
-            if(total <= m/2){
-                if(!con[owner[j++]]++)
-                    ++total;
-            }
-            if(total > m/2){
-                int k = min_element(lcp+i+1,lcp+j) - lcp;
-                if(lcp[k] == len_lcs && (psa==1||strncmp(cad+psa,cad+sa[k],len_lcs))){
-                    psa = sa[k];
-                    char c = cad[psa + len_lcs];
-                    cad[psa + len_lcs] = '\0';
-                    printf("%s\n",cad + psa);
-                }
-                if(!--con[owner[i++]]){
-                    --total;
-                }
-            }
+        forab(i,1,m){
+            scanf("%s", &arr[i]);
+            strcat(cad,"$");
+            strcat(cad,arr[i]);
         }
+
+        buid_sa();
+        LCP();
+        calcOwner();
+
+        int mejor = 0, length = (m/2), cont = 0, low = m, up = m, best = -1, menoridx, total = 1;
+        memset(vis, 0, sizeof(vis));
+
+        /*forr(i, len_cad){
+            printf("i %2d |ow %2d | sa %2d | lcp %2d | %s\n", i, owner[i], sa[i], lcp[i], cad+sa[i]);
+        }*/
+
+        string str;
+        set<string> res;
+        vis[owner[up]]++;
+        while(up < len_cad){
+            //printf("rango %d %d\n", low, up);
+            if(total <= length){
+                //printf("Se expande por arriba\n");
+                up++;
+                if(up >= len_cad) break;
+                if(vis[owner[up]] == 0) total++;
+                vis[owner[up]]++;
+            }else{
+                menoridx = min_element(lcp + low + 1, lcp + up + 1) - lcp;
+                if(lcp[menoridx] > best){
+                    best = max(best, lcp[menoridx]);
+                    //printf("mejor elemento en pos %d, corresponde %.*s\n", menoridx, best, cad + sa[menoridx]);
+                    res.clear();
+                    memcpy(cadaux,&cad[sa[menoridx]],best);
+                    cadaux[best] = '\0';
+                    res.insert((string) cadaux);
+                }else if(lcp[menoridx] == best){
+                    //printf("repite mejor %.*s\n", best, cad + sa[menoridx]);
+                    memcpy(cadaux,&cad[sa[menoridx]],best);
+                    cadaux[best] = '\0';
+                    res.insert((string) cadaux);
+                }
+                vis[owner[low]]--;
+                if(vis[owner[low]] == 0) total--;
+                low++;
+            }
+
+        }
+
+        //printf("mejor longitud = %d\n", best);
+        int idx;
+        if(best > 0){
+            for(auto it=res.begin(); it!=res.end(); ++it){
+                str = *it;
+                cout << str << '\n';
+                //printf("%.*s\n", best, cad + sa[idx]);
+                //printf("%s\n", cad + sa[idx]);
+            }
+        }else printf("?\n");
 
         scanf("%d", &m);
         if(m==0) break;
-        //printf("\n");
+        printf("\n");
     }
 
     return 0;
